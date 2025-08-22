@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+import mysql, { ResultSetHeader } from 'mysql2/promise';
 import { env } from './env.js';
 
 export const pool = mysql.createPool({
@@ -12,6 +12,7 @@ export async function query<T = any>(sql: string, params?: any): Promise<T[]> {
     return rows as T[];
 }
 
-export async function exec(sql: string, params?: any) {
-    await pool.execute(sql, params);
+export async function exec(sql: string, params?: any): Promise<ResultSetHeader> {
+    const [result] = await pool.execute<ResultSetHeader>(sql, params);
+    return result;
 }
