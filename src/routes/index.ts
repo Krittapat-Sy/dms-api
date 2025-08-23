@@ -2,6 +2,7 @@ import { Router } from 'express';
 import rooms from './rooms.routes.js';
 import auth from './auth.routes.js';
 import tenants from './tenants.routes.js'; 
+import leases from './leases.routes.js';  
 
 const r = Router();
 
@@ -11,6 +12,6 @@ r.get('/health', (_req, res) => {
 r.use('/auth', auth);
 r.use('/rooms', rooms);   
 r.use('/tenants', tenants);   
-
+r.use('/leases', leases);           
 
 export default r;
