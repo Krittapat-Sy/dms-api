@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import rooms from './rooms.routes.js';
+import rooms from '../modules/rooms/rooms.routes';
 import auth from './auth.routes.js';
 import tenants from './tenants.routes.js'; 
 import leases from './leases.routes.js';  

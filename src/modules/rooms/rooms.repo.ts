@@ -1,8 +1,8 @@
 import { query, exec } from '../../config/db.js';
-import type { RoomPartial } from '../../schemas/room.schema.js';
+import type { RoomInsertDB, RoomRowDB, RoomUpdateDB } from './room.types.js';
 
-export async function list(): Promise<RoomPartial[]> {
-    return await query<RoomPartial>(
+export async function list(): Promise<RoomRowDB[]> {
+    return await query<RoomRowDB>(
         `
         SELECT id, floor, number, size_sq_m, status, monthly_rent, deposit, created_at 
         FROM rooms 
@@ -11,8 +11,8 @@ export async function list(): Promise<RoomPartial[]> {
     );
 }
 
-export async function get(id: number): Promise<RoomPartial | undefined> {
-    const rows = await query<RoomPartial>(
+export async function get(id: number): Promise<RoomRowDB | undefined> {
+    const rows = await query<RoomRowDB>(
         `
         SELECT id, floor, number, size_sq_m, status, monthly_rent, deposit, created_at 
         FROM rooms 
@@ -21,7 +21,7 @@ export async function get(id: number): Promise<RoomPartial | undefined> {
     return rows[0];
 }
 
-export async function create(data: Omit<RoomPartial, 'id' | 'created_at'>) {
+export async function insert(data: RoomInsertDB) {
     await exec(
         `
         INSERT INTO rooms (number,floor,size_sq_m,status,monthly_rent,deposit)
@@ -30,7 +30,7 @@ export async function create(data: Omit<RoomPartial, 'id' | 'created_at'>) {
     );
 }
 
-export async function update(id: number, data: Partial<Omit<RoomPartial, 'id' | 'created_at'>>) {
+export async function update(id: number, data: RoomUpdateDB) {
     const allowed = ['number', 'floor', 'size_sq_m', 'status', 'monthly_rent', 'deposit'] as const;
 
     const fields: string[] = [];
