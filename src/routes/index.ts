@@ -5,6 +5,7 @@ import tenants from './tenants.routes.js';
 import leases from './leases.routes.js';
 import billing from './billing.routes.js';
 import payments from '../modules/payments/payments.routes.js';
+import tickets from '../modules/tickets/tickets.routes.js';
 
 const r = Router();
 
@@ -17,5 +18,6 @@ r.use('/tenants', tenants);
 r.use('/leases', leases);
 r.use('/', billing);
 r.use('/payments', payments);
+r.use('/tickets', tickets);
 
 export default r;
