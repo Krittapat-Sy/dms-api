@@ -1,79 +1,54 @@
-import type { Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
-import * as repo from './tenants.repo.js';
-import { CreateTenantSchema, UpdateTenantSchema } from '../../schemas/tenant.schema.js';
+import { CreateTenantInput, TenantRow, UpdateTenantInput } from './tenant.schema.js';
+import { query, exec } from '../../config/db.js';
+import { ResultSetHeader } from 'mysql2';
+class NotFoundError extends Error { code = 404 as const; }
+class BadRequestError extends Error { code = 400 as const; }
 
-function parseIdParam(req: Request): number | null {
-    const id = Number(req.params.id);
-    return Number.isInteger(id) && id > 0 ? id : null;
+
+
+export async function list() {
+    const rows = await query<TenantRow>('SELECT * FROM tenants ORDER BY id DESC');
+    return rows;
 }
 
-function validate<T>(schema: z.ZodTypeAny, data: unknown): T {
-    const parsed = schema.safeParse(data);
-    if (!parsed.success) {
-        throw { status: 400, message: parsed.error.issues.map(i => i.message).join(', ') };
+export async function getById(id: number) {
+    const rows = await query<TenantRow>('SELECT * FROM tenants WHERE id = :id', { id });
+    if (!rows.length) throw new NotFoundError('Tenant not found');
+
+    return rows[0];
+}
+
+export async function create(data: CreateTenantInput): Promise<void> {
+    await exec(`
+        INSERT INTO tenants (name, phone, email, citizen_id, note)
+        VALUES (:name, :phone, :email, :citizen_id, :note)
+    `, {
+        name: data.name,
+        phone: data.phone ?? null,
+        email: data.email ?? null,
+        citizen_id: data.citizen_id ?? null,
+        note: data.note ?? null
     }
-    return parsed.data as T;
+    );
 }
 
-export async function create(req: Request, res: Response, next: NextFunction) {
-    try {
-        const data = validate<z.infer<typeof CreateTenantSchema>>(CreateTenantSchema, req.body);
-        await repo.create({
-            name: data.name,
-            phone: data.phone ?? null,
-            email: data.email ?? null,
-            citizen_id: data.citizen_id ?? null,
-            note: data.note ?? null,
-        });
-        res.status(201).json({ ok: true });
-    } catch (e) { next(e); }
+export async function update(id: number, data: UpdateTenantInput): Promise<void> {
+    if (!data || Object.keys(data).length === 0) throw new BadRequestError('Empty update payload');
+
+    const fields = Object.entries(data);
+    const setClause = fields.map(([k]) => `${String(k)} = :${String(k)}`)
+
+    const params: Record<string, unknown> = Object.fromEntries(fields);
+    params.id = id;
+
+    const res: ResultSetHeader = await exec(
+        `UPDATE tenants SET ${setClause} WHERE id = :id`,
+        params
+    );
+    if (res.affectedRows == 0) throw new NotFoundError('Tenant not found');
 }
 
-export async function list(_req: Request, res: Response, next: NextFunction) {
-    try {
-        const tenant = await repo.list();
-        res.json({ tenant });
-    } catch (e) { next(e); }
-}
-
-export async function getById(req: Request, res: Response, next: NextFunction) {
-    try {
-        const id = parseIdParam(req);
-        if (id === null) return res.status(400).json({ error: 'Invalid tenant id' });
-
-        const tenant = await repo.get(id);
-        if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
-
-        res.json({ tenant });
-    } catch (e) { next(e); }
-}
-
-export async function update(req: Request, res: Response, next: NextFunction) {
-    try {
-        const id = parseIdParam(req);
-        if (id === null) return res.status(400).json({ error: 'Invalid tenant id' });
-
-        const data = validate<z.infer<typeof UpdateTenantSchema>>(UpdateTenantSchema, req.body);
-        if (!data || Object.keys(data).length === 0) {
-            return res.status(400).json({ error: 'Empty update payload' });
-        }
-
-        const affected = await repo.update(id, data);
-        if (affected === 0) return res.status(404).json({ error: 'Tenant not found' });
-
-        res.json({ ok: true });
-    } catch (e) { next(e); }
-}
-
-export async function remove(req: Request, res: Response, next: NextFunction) {
-    try {
-        const id = parseIdParam(req);
-        if (id === null) return res.status(400).json({ error: 'Invalid tenant id' });
-
-        const affected = await repo.remove(id);
-        if (affected === 0) return res.status(404).json({ error: 'Tenant not found' });
-
-        res.json({ ok: true });
-    } catch (e) { next(e); }
+export async function remove(id: number): Promise<void> {
+    const res: any = await exec('DELETE FROM tenants WHERE id = :id', { id });
+    if (res.affectedRows === 0) throw new NotFoundError('Tenant not found');
 }
