@@ -3,7 +3,7 @@ import rooms from '../modules/rooms/rooms.routes';
 import auth from './auth.routes.js';
 import tenants from '../modules/tenants/tenants.routes.js';
 import leases from '../modules/leases/leases.routes.js';
-import billing from './billing.routes.js';
+import billing from '../modules/billing/billing.routes.js';
 import payments from '../modules/payments/payments.routes.js';
 import tickets from '../modules/tickets/tickets.routes.js';
 
