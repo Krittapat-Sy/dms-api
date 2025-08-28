@@ -3,8 +3,8 @@ import * as service from './rooms.service.js';
 
 export async function list(_req: Request, res: Response, next: NextFunction) {
     try {
-        const rooms = await service.list();
-        res.json({ rooms });
+        const rows = await service.list();
+        res.json({ data: rows });
     } catch (e) { next(e); }
 }
 
@@ -12,8 +12,7 @@ export async function get(req: Request, res: Response, next: NextFunction) {
     try {
         const id = Number(req.params.id);
         const row = await service.get(id);
-        if (!row) return res.status(404).json({ error: 'Room not found' });
-        res.json(row);
+        res.json({ data: row });
     } catch (e) { next(e); }
 }
 
@@ -30,13 +29,7 @@ export async function update(req: Request, res: Response, next: NextFunction) {
         const id = Number(req.params.id);
         const data = req.body;
 
-        const result = await service.update(id, data);
-        if (result === 'NO_FIELDS') {
-            return res.status(200).json({ ok: true });
-        }
-        if (result === 'NOT_FOUND') {
-            return res.status(404).json({ error: 'Room not found' });
-        }
+        await service.update(id, data);
         return res.status(200).json({ ok: true });
     } catch (e) { next(e); }
 }
@@ -45,9 +38,7 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
     try {
         const id = Number(req.params.id);
         const result = await service.remove(id);
-        if (result === 'NOT_FOUND') {
-            return res.status(404).json({ error: 'Room not found' });
-        }
+
         res.json({ ok: true });
     } catch (e) { next(e); }
 }

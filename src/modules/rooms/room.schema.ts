@@ -12,7 +12,20 @@ const RoomCore = z.object({
 export const CreateRoomSchema = RoomCore.extend({
     status: RoomCore.shape.status.default("VACANT"),
     deposit: RoomCore.shape.deposit.default(0),
+}).strict();
+
+export const RoomRowSchema = RoomCore.extend({
+    id: z.number().int(),
+    created_at: z.date(),
 });
 
-export const UpdateRoomSchema = RoomCore.partial();
+export const UpdateRoomSchema = RoomCore.partial().strict();
+
+export const Params = z.object({
+    id: z.coerce.number<string>()
+});
+
+export type Room = z.infer<typeof RoomRowSchema>;
+export type RoomInsert = z.infer<typeof RoomCore>;
+export type RoomUpdate = z.infer<typeof UpdateRoomSchema>;
 
